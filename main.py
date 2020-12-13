@@ -1,11 +1,22 @@
 import pandas as pd
 import glob
-import getpass
+import argparse
 
-user = getpass.getuser()
-input_dir = f'/Users/{user}/Projects/data/comb-excel'
+parser = argparse.ArgumentParser(description='Tool to combine monthly sales reports.')
+parser.add_argument('data_dir', help='Directory where the sales data is stored')
+parser.add_argument('output_dir', help='Directory where the summary report will be stored')
+parser.add_argument('cust_file', help='Customer account status file')
+parser.add_argument('-d', help='Start date to include')
 
-status = pd.read_excel(input_dir + '/customer-status.xlsx')
+args = parser.parse_args()
+
+
+input_dir = args.data_dir
+dest = args.output_dir
+status = args.cust_file
+date = args.d
+
+status = pd.read_excel(status + '/customer-status.xlsx')
 print(f'Shape of status: {status.shape}')
 
 all_data = pd.DataFrame()
@@ -29,3 +40,8 @@ all_data_st.status.fillna('bronze', inplace=True)
 all_data_st['status'] = all_data_st['status'].astype('category')
 all_data_st['status'].cat.set_categories(['gold', 'silver', 'bronze'], inplace=True)
 all_data_st = all_data_st.sort_values(by='status')
+
+output_file = '/summary_report.xlsx'
+
+with pd.ExcelWriter(dest + output_file) as writer:
+    all_data_st.to_excel(writer)
